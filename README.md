@@ -51,7 +51,7 @@ npm install @galihru/fenxiangnishicangku
 
 若 GitHub Packages 页面仍显示 404，请在修复认证后重新执行一次 release/publish 工作流。
 
-## 工作原理图
+## 工作原理图（Mermaid）
 
 ```mermaid
 flowchart TD
@@ -167,35 +167,45 @@ jobs:
     table-to-image: "true"
 ```
 
-  ### 3. LinkedIn API 配置教程（完整步骤）
+### 3. LinkedIn API 配置流程图（Mermaid）
 
-  1. 打开 LinkedIn 应用认证页面：
-    - https://www.linkedin.com/developers/apps/233110166/auth
-  2. 在应用权限/产品中启用发帖相关权限（例如 `w_member_social`）。
-  3. 在 LinkedIn 开发者后台生成 Access Token。
-  4. 通过 API 获取用户 id 并组装作者 URN：
+```mermaid
+flowchart TD
+  A[打开 LinkedIn 开发者应用] --> B[启用发帖权限 w_member_social]
+  B --> C[生成 Access Token]
+  C --> D[调用 v2 me 接口]
+  D --> E[组装作者 URN: urn:li:person:id]
+  E --> F[写入 GitHub Secrets]
+  F --> G[以 publish-mode auto 运行工作流]
+```
 
-  ```bash
-  curl -s -H "Authorization: Bearer YOUR_LINKEDIN_ACCESS_TOKEN" \
-    https://api.linkedin.com/v2/me
-  ```
+### 4. LinkedIn API 配置教程（完整步骤）
 
-  将返回中的 `id` 组装为：
+1. 打开 LinkedIn 应用认证页面：https://www.linkedin.com/developers/apps/233110166/auth
+2. 在应用权限/产品中启用发帖相关权限（例如 `w_member_social`）。
+3. 在 LinkedIn 开发者后台生成 Access Token。
+4. 通过 API 获取用户 id 并组装作者 URN：
 
-  ```text
-  urn:li:person:<id>
-  ```
+```bash
+curl -s -H "Authorization: Bearer YOUR_LINKEDIN_ACCESS_TOKEN" \
+  https://api.linkedin.com/v2/me
+```
 
-  5. 在 GitHub 仓库 Settings > Secrets and variables > Actions 中配置：
-    - `LINKEDIN_ACCESS_TOKEN`
-    - `LINKEDIN_AUTHOR_URN`
-  6. 工作流中使用 `publish-mode: auto` 执行自动发布。
+将返回中的 `id` 组装为：
 
-  注意：
+```text
+urn:li:person:<id>
+```
 
-  - `Client ID` 与 `Client Secret` 是应用凭据，不是 Action 直接输入项。
-  - `LINKEDIN_AUTHOR_URN` 必须是 URN，不能用个人主页 URL 替代。
-  - 个人开发者若不想折腾 API，直接用 `publish-mode: manual` 最稳妥。
+5. 在 GitHub 仓库 Settings > Secrets and variables > Actions 中配置：
+`LINKEDIN_ACCESS_TOKEN`, `LINKEDIN_AUTHOR_URN`。
+6. 工作流中使用 `publish-mode: auto` 执行自动发布。
+
+注意：
+
+- `Client ID` 与 `Client Secret` 是应用凭据，不是 Action 直接输入项。
+- `LINKEDIN_AUTHOR_URN` 必须是 URN，不能用个人主页 URL 替代。
+- 个人开发者若不想折腾 API，直接用 `publish-mode: manual` 最稳妥。
 
 ## 输入参数
 

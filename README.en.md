@@ -51,7 +51,7 @@ npm install @galihru/fenxiangnishicangku
 
 If the GitHub Packages page still shows 404, run the release workflow again after fixing registry auth.
 
-## How It Works (Diagram)
+## How It Works (Mermaid Diagram)
 
 ```mermaid
 flowchart TD
@@ -167,35 +167,45 @@ Notes:
     table-to-image: "true"
 ```
 
-  ### 3. LinkedIn API Setup (Step-by-Step)
+### 3. LinkedIn API Setup Flow (Mermaid)
 
-  1. Open your LinkedIn app auth page:
-    - https://www.linkedin.com/developers/apps/233110166/auth
-  2. In app products/permissions, enable the permissions needed for posting (for example, `w_member_social`).
-  3. Generate an access token from your LinkedIn app.
-  4. Resolve your author URN:
+```mermaid
+flowchart TD
+  A[Open LinkedIn Developer App] --> B[Enable posting permission w_member_social]
+  B --> C[Generate Access Token]
+  C --> D[Call v2 me endpoint]
+  D --> E[Build author URN: urn:li:person:id]
+  E --> F[Set GitHub Secrets]
+  F --> G[Run workflow with publish-mode auto]
+```
 
-  ```bash
-  curl -s -H "Authorization: Bearer YOUR_LINKEDIN_ACCESS_TOKEN" \
-    https://api.linkedin.com/v2/me
-  ```
+### 4. LinkedIn API Setup (Step-by-Step)
 
-  Use the returned `id` to build:
+1. Open your LinkedIn app auth page: https://www.linkedin.com/developers/apps/233110166/auth
+2. In app products/permissions, enable the permissions needed for posting (for example, `w_member_social`).
+3. Generate an access token from your LinkedIn app.
+4. Resolve your author URN:
 
-  ```text
-  urn:li:person:<id>
-  ```
+```bash
+curl -s -H "Authorization: Bearer YOUR_LINKEDIN_ACCESS_TOKEN" \
+  https://api.linkedin.com/v2/me
+```
 
-  5. Add secrets in GitHub repository Settings > Secrets and variables > Actions:
-    - `LINKEDIN_ACCESS_TOKEN`
-    - `LINKEDIN_AUTHOR_URN`
-  6. Run workflow with `publish-mode: auto`.
+Use the returned `id` to build:
 
-  Important notes:
+```text
+urn:li:person:<id>
+```
 
-  - `Client ID` and `Client Secret` are app credentials, not directly used as action inputs.
-  - `LINKEDIN_AUTHOR_URN` must be URN format, not profile URL.
-  - For individual users, keep using `publish-mode: manual` when API setup is not practical.
+5. Add secrets in GitHub repository Settings > Secrets and variables > Actions:
+`LINKEDIN_ACCESS_TOKEN`, `LINKEDIN_AUTHOR_URN`.
+6. Run workflow with `publish-mode: auto`.
+
+Important notes:
+
+- `Client ID` and `Client Secret` are app credentials, not directly used as action inputs.
+- `LINKEDIN_AUTHOR_URN` must be URN format, not profile URL.
+- For individual users, keep using `publish-mode: manual` when API setup is not practical.
 
 ## Inputs
 
