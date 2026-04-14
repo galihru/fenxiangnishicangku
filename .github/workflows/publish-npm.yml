@@ -92,8 +92,10 @@ jobs:
         shell: bash
         run: |
           OWNER_LOWER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
-          echo "@${OWNER_LOWER}:registry=https://npm.pkg.github.com" > ~/.npmrc
-          echo "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}" >> ~/.npmrc
+          NPMRC_PATH="${NPM_CONFIG_USERCONFIG:-$HOME/.npmrc}"
+          echo "@${OWNER_LOWER}:registry=https://npm.pkg.github.com" >> "$NPMRC_PATH"
+          echo "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}" >> "$NPMRC_PATH"
+          npm config list
 
       - name: Publish to GitHub Packages
         run: npm publish ./.gpr-pkg --registry https://npm.pkg.github.com

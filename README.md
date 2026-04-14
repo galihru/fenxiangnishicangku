@@ -2,6 +2,11 @@
 
 [English](README.en.md)
 
+[![npm version](https://img.shields.io/npm/v/fenxiangnishicangku?logo=npm)](https://www.npmjs.com/package/fenxiangnishicangku)
+[![npm downloads](https://img.shields.io/npm/dm/fenxiangnishicangku?logo=npm)](https://www.npmjs.com/package/fenxiangnishicangku)
+[![CI](https://img.shields.io/github/actions/workflow/status/galihru/fenxiangnishicangku/ci.yml?branch=main&label=CI)](https://github.com/galihru/fenxiangnishicangku/actions/workflows/ci.yml)
+[![GitHub Packages](https://img.shields.io/badge/GitHub%20Packages-@galihru%2Ffenxiangnishicangku-24292f?logo=github)](https://github.com/users/galihru/packages/npm/package/fenxiangnishicangku)
+
 面向全球开发者的 GitHub Action 与 npm 模块，用于把 GitHub 仓库更新分享到社交媒体。
 
 默认模式对个人开发者友好：不需要 API，即可生成“可直接手动发帖”的素材包。
@@ -23,6 +28,44 @@
 
 - `manual`（默认）：不调用平台 API，生成手动发布素材包
 - `auto`：通过平台 API 直接发布（LinkedIn 需要 token + author URN）
+
+## 包发布渠道
+
+- npm（公开包）：https://www.npmjs.com/package/fenxiangnishicangku
+- GitHub Packages（作用域包）：`@galihru/fenxiangnishicangku`
+- GitHub Packages 页面：https://github.com/users/galihru/packages/npm/package/fenxiangnishicangku
+
+通过 npm 安装：
+
+```bash
+npm install fenxiangnishicangku
+```
+
+通过 GitHub Packages 安装：
+
+```bash
+npm config set @galihru:registry https://npm.pkg.github.com
+npm config set //npm.pkg.github.com/:_authToken ${GH_PACKAGES_TOKEN}
+npm install @galihru/fenxiangnishicangku
+```
+
+若 GitHub Packages 页面仍显示 404，请在修复认证后重新执行一次 release/publish 工作流。
+
+## 工作原理图
+
+```mermaid
+flowchart TD
+  A[GitHub 触发事件或手动触发] --> B[解析 README 并生成文案]
+  B --> C[收集 README 与仓库媒体]
+  C --> D[Markdown 表格渲染为 PNG]
+  D --> E{publish-mode}
+  E -->|manual| F[生成 .social-share-output 素材包]
+  F --> G[上传 Artifact]
+  G --> H[用户手动发布到 LinkedIn]
+  E -->|auto| I[调用 LinkedIn API]
+  I --> J[上传媒体资源]
+  J --> K[创建 LinkedIn 帖子]
+```
 
 ## 快速开始（无需 API，个人用户优先）
 
@@ -124,6 +167,36 @@ jobs:
     table-to-image: "true"
 ```
 
+  ### 3. LinkedIn API 配置教程（完整步骤）
+
+  1. 打开 LinkedIn 应用认证页面：
+    - https://www.linkedin.com/developers/apps/233110166/auth
+  2. 在应用权限/产品中启用发帖相关权限（例如 `w_member_social`）。
+  3. 在 LinkedIn 开发者后台生成 Access Token。
+  4. 通过 API 获取用户 id 并组装作者 URN：
+
+  ```bash
+  curl -s -H "Authorization: Bearer YOUR_LINKEDIN_ACCESS_TOKEN" \
+    https://api.linkedin.com/v2/me
+  ```
+
+  将返回中的 `id` 组装为：
+
+  ```text
+  urn:li:person:<id>
+  ```
+
+  5. 在 GitHub 仓库 Settings > Secrets and variables > Actions 中配置：
+    - `LINKEDIN_ACCESS_TOKEN`
+    - `LINKEDIN_AUTHOR_URN`
+  6. 工作流中使用 `publish-mode: auto` 执行自动发布。
+
+  注意：
+
+  - `Client ID` 与 `Client Secret` 是应用凭据，不是 Action 直接输入项。
+  - `LINKEDIN_AUTHOR_URN` 必须是 URN，不能用个人主页 URL 替代。
+  - 个人开发者若不想折腾 API，直接用 `publish-mode: manual` 最稳妥。
+
 ## 输入参数
 
 | 参数 | 必填 | 默认值 | 说明 |
@@ -207,7 +280,14 @@ const {
 
 ## 配置截图
 
-截图文件统一放在 [docs/screenshots/README.md](docs/screenshots/README.md) 约定的路径与命名中，文档可持续追加。
+截图文件统一放在 [docs/screenshots/README.md](docs/screenshots/README.md) 约定的路径与命名中，随后会在这里直接展示。
+
+### API 与 Secrets 配置截图
+
+![Actions secrets 页面](docs/screenshots/01-actions-secrets-page.svg)
+![Actions secrets 侧边栏](docs/screenshots/02-actions-secrets-sidebar.svg)
+![LinkedIn 应用凭据](docs/screenshots/03-linkedin-app-credentials.svg)
+![项目 Logo](docs/screenshots/04-project-logo.svg)
 
 ## 许可证
 
