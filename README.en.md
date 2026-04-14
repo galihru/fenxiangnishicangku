@@ -2,7 +2,9 @@
 
 [中文文档](README.md)
 
-Fenxiangnishicangku is a GitHub Action and npm module for publishing repository updates to social media.
+Fenxiangnishicangku is a GitHub Action and npm module for sharing repository updates to social media.
+
+Default behavior is individual-friendly: no API required. The action generates a ready-to-post package (caption + media) so you can post manually.
 
 ## Features
 
@@ -10,36 +12,27 @@ Fenxiangnishicangku is a GitHub Action and npm module for publishing repository 
 - Discover media from README references and repository files
 - Convert Markdown tables into PNG attachments
 - Extract badge target links for contextual captions
+- Generate a manual share package for one-step personal posting
 - Use class-based architecture for future provider expansion
 
 ## Supported Platform
 
 - Current: LinkedIn
 
-## Quick Start (GitHub Action)
+## Usage Modes
+
+- `manual` (default): No API call. Generates a package for manual posting.
+- `auto`: Publishes directly through platform API (LinkedIn token + author URN required).
+
+## Quick Start (No API, Individual-Friendly)
 
 ### 1. Prerequisites
 
 - GitHub Actions enabled in your repository
-- A LinkedIn developer app with a valid access token
-- Posting permission on the token (commonly `w_member_social`)
-- Author URN (`urn:li:person:*` or `urn:li:organization:*`)
-- Optional profile URL via `linkedin-profile-url` for branding link in caption
-- No package installation required in the consumer repository (the action installs its own runtime dependencies automatically)
+- No LinkedIn developer app required
+- No repository secrets required
 
-### 2. Configure Repository Secrets
-
-Add these in Settings > Secrets and variables > Actions:
-
-- `LINKEDIN_ACCESS_TOKEN`
-- `LINKEDIN_AUTHOR_URN`
-
-Notes:
-
-- Publish identity is determined by `LINKEDIN_AUTHOR_URN`
-- A LinkedIn profile URL (for example `https://www.linkedin.com/in/...`) is not an URN and cannot replace `LINKEDIN_AUTHOR_URN`
-
-### 3. Add Workflow
+### 2. Add Workflow
 
 Create `.github/workflows/share.yml`:
 
@@ -57,13 +50,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Publish to Social Media
+      - name: Generate social share package
+        id: share
         uses: galihru/fenxiangnishicangku@v1
         with:
+          publish-mode: manual
           platform: linkedin
-          linkedin-access-token: ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
-          linkedin-author-urn: ${{ secrets.LINKEDIN_AUTHOR_URN }}
-          linkedin-profile-url: "https://www.linkedin.com/in/galih-ridho-utomo-2493492b0/"
           caption-source: readme
           include-repo-link: "true"
           include-badges: "true"
@@ -71,20 +63,75 @@ jobs:
           include-readme-images: "true"
           include-repo-media: "true"
           table-to-image: "true"
+
+      - name: Upload package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: social-share-package
+          path: ${{ steps.share.outputs.package-dir }}
 ```
 
-### 4. Run
+### 3. Run
 
-- Manual run from the Actions tab
-- Automatic run on Release publish event
+- Trigger manually from Actions tab, or by release event
+- Download artifact `social-share-package`
+- Post manually to LinkedIn using:
+  - `caption.txt`
+  - files in `media/`
+
+### 4. Package Content
+
+By default, the package is generated in `.social-share-output` and includes:
+
+- `caption.txt`
+- `manifest.json`
+- `README.md`
+- `media/*`
+
+## Optional: Fully Automatic LinkedIn Publish
+
+Use this mode only if you want API-based posting.
+
+### 1. Configure Repository Secrets
+
+Add these in Settings > Secrets and variables > Actions:
+
+- `LINKEDIN_ACCESS_TOKEN`
+- `LINKEDIN_AUTHOR_URN`
+
+Notes:
+
+- Publish identity is determined by `LINKEDIN_AUTHOR_URN`
+- A LinkedIn profile URL (for example `https://www.linkedin.com/in/...`) is not an URN and cannot replace `LINKEDIN_AUTHOR_URN`
+
+### 2. Use Auto Mode In Workflow
+
+```yaml
+- name: Publish directly to LinkedIn API
+  uses: galihru/fenxiangnishicangku@v1
+  with:
+    publish-mode: auto
+    platform: linkedin
+    linkedin-access-token: ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
+    linkedin-author-urn: ${{ secrets.LINKEDIN_AUTHOR_URN }}
+    linkedin-profile-url: "https://www.linkedin.com/in/your-profile/"
+    caption-source: readme
+    include-repo-link: "true"
+    include-badges: "true"
+    auto-media: "true"
+    include-readme-images: "true"
+    include-repo-media: "true"
+    table-to-image: "true"
+```
 
 ## Inputs
 
 | Input | Required | Default | Description |
 |---|---|---|---|
+| `publish-mode` | no | `manual` | `manual` generates package without API call. `auto` publishes through API. |
 | `platform` | no | `linkedin` | Target platform. Currently supports `linkedin`. |
-| `linkedin-access-token` | conditional | - | LinkedIn OAuth token (`platform=linkedin`). |
-| `linkedin-author-urn` | conditional | - | LinkedIn author URN (`urn:li:person:*` / `urn:li:organization:*`). |
+| `linkedin-access-token` | conditional | - | Required when `publish-mode=auto` and `platform=linkedin`. |
+| `linkedin-author-urn` | conditional | - | Required when `publish-mode=auto` and `platform=linkedin`. |
 | `linkedin-profile-url` | no | empty | Optional profile link appended to caption for branding. |
 | `caption-source` | no | `readme` | Caption source: `readme` or `custom`. |
 | `custom-caption` | no | empty | Custom caption text. |
@@ -98,15 +145,21 @@ jobs:
 | `table-to-image` | no | `true` | Render Markdown tables to PNG. |
 | `max-images` | no | `9` | Max image attachments per post. |
 | `dry-run` | no | `false` | Preview only, do not publish. |
+| `manual-output-dir` | no | `.social-share-output` | Output directory used in manual mode. |
 
 ## Outputs
 
 | Output | Description |
 |---|---|
-| `post-id` | Published post id |
-| `post-urn` | Backward-compatible alias of `post-id` |
+| `mode` | Execution mode: `manual` or `auto` |
+| `post-id` | Published post id (auto mode) |
+| `post-urn` | Backward-compatible alias of `post-id` (auto mode) |
 | `platform` | Platform used for publishing |
-| `media-count` | Number of uploaded media assets |
+| `media-count` | Number of selected/uploaded media assets |
+| `package-dir` | Absolute path to generated package directory (manual mode) |
+| `caption-file` | Absolute path to generated caption file (manual mode) |
+| `manifest-file` | Absolute path to generated manifest file (manual mode) |
+| `media-files` | JSON array of copied media file paths (manual mode) |
 
 ## Content And Media Rules
 
@@ -117,7 +170,7 @@ jobs:
 
 ## npm Module
 
-This section is only for direct Node.js module usage. If the project is used as a GitHub Action (`uses: ...`), skip npm installation.
+This section is only for direct Node.js module usage. If used as GitHub Action (`uses: ...`), skip npm installation.
 
 ### Install
 
@@ -145,7 +198,8 @@ Main classes:
 
 ## Troubleshooting
 
-- Permission errors: verify token scopes and URN type
+- Missing `post-id`: expected in manual mode; only auto mode creates platform post id
+- Permission errors in auto mode: verify token scopes and URN type
 - Missing attachments: verify `media-glob` and file extensions
 - Caption mismatch: use `caption-source: custom` with `custom-caption`
 

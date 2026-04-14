@@ -6,6 +6,10 @@ branding:
   color: blue
 
 inputs:
+  publish-mode:
+    description: Publishing mode. manual generates a ready-to-post package without API calls. auto publishes via platform API.
+    required: false
+    default: manual
   platform:
     description: Target platform. Currently supported value is linkedin.
     required: false
@@ -68,6 +72,10 @@ inputs:
     description: If true, skip posting and only print payload preview.
     required: false
     default: "false"
+  manual-output-dir:
+    description: Output directory used in manual mode.
+    required: false
+    default: .social-share-output
 
 outputs:
   post-id:
@@ -78,6 +86,16 @@ outputs:
     description: Platform used for publishing.
   media-count:
     description: Number of media assets uploaded.
+  mode:
+    description: Execution mode, manual or auto.
+  package-dir:
+    description: Absolute path to generated package directory in manual mode.
+  caption-file:
+    description: Absolute path to caption file in manual mode.
+  manifest-file:
+    description: Absolute path to manifest file in manual mode.
+  media-files:
+    description: JSON array of copied media files in manual mode.
 
 runs:
   using: node20

@@ -3,6 +3,14 @@ name: Share To LinkedIn
 on:
   workflow_dispatch:
     inputs:
+      publish_mode:
+        description: Publish mode (manual or auto)
+        required: false
+        default: manual
+        type: choice
+        options:
+          - manual
+          - auto
       caption:
         description: Optional custom caption
         required: false
@@ -35,14 +43,16 @@ jobs:
         run: npm ci
 
       - name: Share repository to LinkedIn
+        id: share
         uses: ./
         with:
+          publish-mode: ${{ github.event.inputs.publish_mode || 'manual' }}
           platform: linkedin
           linkedin-access-token: ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
           linkedin-author-urn: ${{ secrets.LINKEDIN_AUTHOR_URN }}
-          linkedin-profile-url: ${{ github.event.inputs.profile_url }}
+          linkedin-profile-url: ${{ github.event.inputs.profile_url || '' }}
           caption-source: custom
-          custom-caption: ${{ github.event.inputs.caption }}
+          custom-caption: ${{ github.event.inputs.caption || '' }}
           include-repo-link: "true"
           include-badges: "true"
           auto-media: "true"
@@ -50,3 +60,11 @@ jobs:
           include-repo-media: "true"
           table-to-image: "true"
           dry-run: "false"
+
+      - name: Upload manual share package
+        if: ${{ always() && steps.share.outputs.mode == 'manual' && steps.share.outputs.package-dir != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: social-share-package-${{ github.run_number }}
+          path: ${{ steps.share.outputs.package-dir }}
+          if-no-files-found: error
