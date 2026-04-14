@@ -1,0 +1,101 @@
+name: Auto Release And Publish
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - action.yml
+      - index.js
+      - module.js
+      - lib/**
+      - scripts/**
+      - package.json
+      - package-lock.json
+
+jobs:
+  release:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint syntax
+        run: npm run lint
+
+      - name: Bump package version
+        id: version
+        shell: bash
+        run: |
+          npm version patch --no-git-tag-version
+          NEW_VERSION=$(node -p "require('./package.json').version")
+          echo "new_version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
+          echo "major_version=${NEW_VERSION%%.*}" >> "$GITHUB_OUTPUT"
+
+      - name: Commit and tag release
+        shell: bash
+        run: |
+          NEW_VERSION="${{ steps.version.outputs.new_version }}"
+          MAJOR_VERSION="${{ steps.version.outputs.major_version }}"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add package.json package-lock.json
+          git commit -m "chore(release): v${NEW_VERSION} [skip ci]"
+
+          git tag -a "v${NEW_VERSION}" -m "Release v${NEW_VERSION}"
+          git push origin HEAD:main
+          git push origin "v${NEW_VERSION}"
+
+          git tag -fa "v${MAJOR_VERSION}" -m "Update major tag v${MAJOR_VERSION}"
+          git push origin "v${MAJOR_VERSION}" --force
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.new_version }}
+          generate_release_notes: true
+
+      - name: Setup Node for npmjs
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org
+
+      - name: Publish to npmjs
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Prepare GitHub Packages bundle
+        run: npm run prepare:gpr -- ${{ github.repository_owner }}
+
+      - name: Setup npm auth for GitHub Packages
+        shell: bash
+        run: |
+          OWNER_LOWER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          echo "@${OWNER_LOWER}:registry=https://npm.pkg.github.com" > ~/.npmrc
+          echo "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}" >> ~/.npmrc
+
+      - name: Publish to GitHub Packages
+        run: npm publish ./.gpr-pkg --registry https://npm.pkg.github.com
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

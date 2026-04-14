@@ -1,0 +1,85 @@
+name: Share Repo To Social Media
+description: Auto share GitHub repositories to social media with README-aware captions and media attachments. LinkedIn is currently supported.
+author: galihru
+branding:
+  icon: share-2
+  color: blue
+
+inputs:
+  platform:
+    description: Target platform. Currently supported value is linkedin.
+    required: false
+    default: linkedin
+  linkedin-access-token:
+    description: LinkedIn OAuth access token.
+    required: false
+  linkedin-author-urn:
+    description: LinkedIn author URN, for example urn:li:person:xxxx or urn:li:organization:xxxx.
+    required: false
+  linkedin-profile-url:
+    description: Optional LinkedIn profile URL to append in caption as branding link.
+    required: false
+    default: ""
+  caption-source:
+    description: Caption source, readme or custom.
+    required: false
+    default: readme
+  custom-caption:
+    description: Custom caption text used when caption-source is custom.
+    required: false
+    default: ""
+  readme-path:
+    description: Path to README file.
+    required: false
+    default: README.md
+  include-repo-link:
+    description: Append repository URL for branding.
+    required: false
+    default: "true"
+  include-badges:
+    description: Parse README badges and append badge target links in caption.
+    required: false
+    default: "true"
+  auto-media:
+    description: Auto collect media files from README and repository.
+    required: false
+    default: "true"
+  include-readme-images:
+    description: Include README images and videos as attachments.
+    required: false
+    default: "true"
+  include-repo-media:
+    description: Include repository media matched by media-glob.
+    required: false
+    default: "true"
+  media-glob:
+    description: Glob pattern to collect repository media.
+    required: false
+    default: "**/*.{png,jpg,jpeg,gif,webp,mp4,mov,avi,webm,mkv}"
+  table-to-image:
+    description: Convert markdown tables in README into PNG and include as attachments.
+    required: false
+    default: "true"
+  max-images:
+    description: Maximum number of image attachments in one post.
+    required: false
+    default: "9"
+  dry-run:
+    description: If true, skip posting and only print payload preview.
+    required: false
+    default: "false"
+
+outputs:
+  post-id:
+    description: Published post id from the target platform.
+  post-urn:
+    description: Backward-compatible alias for post-id.
+  platform:
+    description: Platform used for publishing.
+  media-count:
+    description: Number of media assets uploaded.
+
+runs:
+  using: node20
+  pre: bootstrap.js
+  main: index.js

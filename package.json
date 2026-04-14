@@ -1,0 +1,56 @@
+{
+  "name": "fenxiangnishicangku",
+  "version": "0.2.0",
+  "description": "Class-based social sharing toolkit and GitHub Action. LinkedIn is currently supported.",
+  "main": "module.js",
+  "files": [
+    "action.yml",
+    "index.js",
+    "module.js",
+    "lib",
+    "scripts"
+  ],
+  "exports": {
+    ".": "./module.js",
+    "./linkedin": "./lib/linkedin.js",
+    "./readme": "./lib/readme.js",
+    "./table-renderer": "./lib/tableRenderer.js",
+    "./social": "./lib/social/SocialMediaPublisher.js"
+  },
+  "scripts": {
+    "lint": "node --check index.js && node --check module.js && node --check lib/readme.js && node --check lib/tableRenderer.js && node --check lib/linkedin.js && node --check lib/social/SocialMediaPublisher.js",
+    "test": "node --test",
+    "prepare:gpr": "node scripts/prepare-gpr-package.js",
+    "publish:gpr": "npm publish ./.gpr-pkg --registry https://npm.pkg.github.com"
+  },
+  "keywords": [
+    "github-action",
+    "media-social",
+    "automation",
+    "portfolio",
+    "share"
+  ],
+  "author": "galihru",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/galihru/fenxiangnishicangku.git"
+  },
+  "homepage": "https://github.com/galihru/fenxiangnishicangku",
+  "bugs": {
+    "url": "https://github.com/galihru/fenxiangnishicangku/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@actions/core": "^1.11.1",
+    "@actions/github": "^6.0.1",
+    "fast-glob": "^3.3.3",
+    "mime-types": "^2.1.35",
+    "sharp": "^0.34.2"
+  }
+}

@@ -1,0 +1,43 @@
+name: Share To LinkedIn
+
+on:
+  workflow_dispatch:
+    inputs:
+      caption:
+        description: Optional custom caption
+        required: false
+        type: string
+      profile_url:
+        description: Optional LinkedIn profile URL shown in caption
+        required: false
+        default: "https://www.linkedin.com/in/galih-ridho-utomo-2493492b0/"
+        type: string
+  release:
+    types: [published]
+
+jobs:
+  share:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Share repository to LinkedIn
+        uses: ./
+        with:
+          platform: linkedin
+          linkedin-access-token: ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
+          linkedin-author-urn: ${{ secrets.LINKEDIN_AUTHOR_URN }}
+          linkedin-profile-url: ${{ github.event.inputs.profile_url }}
+          caption-source: custom
+          custom-caption: ${{ github.event.inputs.caption }}
+          include-repo-link: "true"
+          include-badges: "true"
+          auto-media: "true"
+          include-readme-images: "true"
+          include-repo-media: "true"
+          table-to-image: "true"
+          dry-run: "false"
