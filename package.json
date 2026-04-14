@@ -1,6 +1,6 @@
 {
   "name": "fenxiangnishicangku",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Class-based social sharing toolkit and GitHub Action. LinkedIn is currently supported.",
   "main": "module.js",
   "files": [
